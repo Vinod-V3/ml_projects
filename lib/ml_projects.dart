@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import './config/app_config.dart';
+import 'package:ml_projects/config/app_config.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class MLProjects extends StatefulWidget {
   final Map<String, dynamic> config;
@@ -21,6 +22,6 @@ class _MLProjectsState extends State<MLProjects> {
   }
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(onPressed: readConfigData, child: const Text('ML Projects'));
+    return ElevatedButton(onPressed: readConfigData, child: Text('assigned_to_me'.tr()));
   }
 }
