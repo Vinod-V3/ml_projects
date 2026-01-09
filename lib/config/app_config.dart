@@ -14,6 +14,15 @@ class AppConfig {
   dynamic get(String key) => _config[key];
   Map<String, dynamic> get all => _config;
 
+  String? get baseUrl => _config['baseUrl'] as String?;
+  String? get token => _config['token'] as String?;
+  String? get cookie => _config['cookie'] as String?;
+  
+  Map<String, dynamic>? get profileData {
+    final data = _config['profileData'];
+    return data is Map<String, dynamic> ? data : null;
+  }
+
   void update(String key, dynamic value) {
     _config[key] = value;
   }

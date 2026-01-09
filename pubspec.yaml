@@ -11,6 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
   easy_localization: ^3.0.8
+  dio: ^5.4.0
+  fluttertoast: ^8.2.4
 
 dev_dependencies:
   flutter_test:

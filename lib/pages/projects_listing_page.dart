@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:ml_projects/config/api_endpoints.dart';
 import 'package:ml_projects/config/app_config.dart';
 import 'package:ml_projects/routing/app_router.dart';
+import 'package:ml_projects/services/api_service.dart';
+import 'package:ml_projects/services/toast_service.dart';
 
 class ProjectsListingPage extends StatefulWidget {
   const ProjectsListingPage({super.key});
@@ -11,46 +14,63 @@ class ProjectsListingPage extends StatefulWidget {
 }
 
 class _ProjectsListingPageState extends State<ProjectsListingPage> {
-  List<Map<String, dynamic>> _projects = [];
+  final ApiService _apiService = ApiService();
+  List<Map<String, dynamic>> _projectsList = [];
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadProjects();
+    _fetchProjects();
   }
 
-  void _loadProjects() {
-    // Load projects from AppConfig or use sample data
-    final configProjects = AppConfig.instance.get('projects');
-    if (configProjects != null && configProjects is List) {
-      _projects = List<Map<String, dynamic>>.from(
-        configProjects.map((p) => Map<String, dynamic>.from(p)),
+  Future<void> _fetchProjects() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final profileData = AppConfig.instance.profileData;
+      if (profileData == null) {
+        throw Exception('Profile data not configured');
+      }
+
+      final response = await _apiService.post(
+        ApiEndpoints.targetedSolutionsList,
+        data: profileData,
+        queryParameters: {
+          'type': 'improvementProject',
+          'page': 1,
+          'limit': 10,
+          'search': '',
+        },
       );
-    } else {
-      // Sample data for demonstration
-      _projects = [
-        {
-          'id': '1',
-          'name': 'Image Classification',
-          'description': 'Deep learning model for image classification',
-          'status': 'Active',
-          'accuracy': '94.5%',
-        },
-        {
-          'id': '2',
-          'name': 'Sentiment Analysis',
-          'description': 'NLP model for sentiment analysis',
-          'status': 'Completed',
-          'accuracy': '89.2%',
-        },
-        {
-          'id': '3',
-          'name': 'Object Detection',
-          'description': 'Real-time object detection system',
-          'status': 'In Progress',
-          'accuracy': '91.8%',
-        },
-      ];
+
+      if (response != null && response is Map<String, dynamic>) {
+        final result = response['result'];
+        if (result != null && result is Map<String, dynamic>) {
+          final data = result['data'];
+          if (data != null && data is List) {
+            setState(() {
+              _projectsList = data.map((item) => item as Map<String, dynamic>).toList();
+              _isLoading = false;
+            });
+            return;
+          }
+        }
+      }
+
+      throw Exception('Invalid response format');
+    } catch (e) {
+      debugPrint('Error fetching projects: $e');
+      
+      ToastService.showError(
+        e.toString().replaceFirst('Exception: ', ''),
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -72,90 +92,71 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
             Navigator.of(context, rootNavigator: true).pop();
           },
         ),
-        title: Text('ml_projects'.tr()),
+        title: Text('projects'.tr()),
         elevation: 2,
       ),
-      body: _projects.isEmpty
-          ? Center(
-              child: Text('no_projects_found'.tr()),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: _projects.length,
-              itemBuilder: (context, index) {
-                final project = _projects[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    title: Text(
-                      project['name'] ?? 'Untitled Project',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 8),
-                        Text(project['description'] ?? ''),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            _buildStatusChip(project['status'] ?? 'Unknown'),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Accuracy: ${project['accuracy'] ?? 'N/A'}',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () => _navigateToDetails(project),
-                  ),
-                );
-              },
-            ),
+      body: _buildBody(),
     );
   }
 
-  Widget _buildStatusChip(String status) {
-    Color color;
-    switch (status.toLowerCase()) {
-      case 'active':
-        color = Colors.green;
-        break;
-      case 'completed':
-        color = Colors.blue;
-        break;
-      case 'in progress':
-        color = Colors.orange;
-        break;
-      default:
-        color = Colors.grey;
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color, width: 1),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
+    if (_projectsList.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.inbox_outlined,
+              size: 64,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'no_projects_found'.tr(),
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
         ),
-      ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+        itemCount: _projectsList.length,
+        itemBuilder: (context, index) {
+          final project = _projectsList[index];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              contentPadding: const EdgeInsets.all(16),
+              title: Text(
+                project['name'] ?? 'Untitled Project',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  Text(project['description'] ?? '')
+                ],
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () => _navigateToDetails(project),
+            ),
+          );
+      },
     );
   }
 }

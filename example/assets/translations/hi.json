@@ -1,5 +1,7 @@
 {
     "assigned_to_me": "मुझे सौंपा गया",
     "discovered_by_me": "मुझे खोजा गया",
-    "created_by_me": "मेरा बनाया हुआ"
+    "created_by_me": "मेरा बनाया हुआ",
+    "projects": "परियोजनाएं",
+    "no_projects_found": "कोई परियोजना नहीं मिली"
 }
