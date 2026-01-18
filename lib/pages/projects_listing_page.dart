@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:ml_projects/config/api_endpoints.dart';
@@ -5,6 +6,8 @@ import 'package:ml_projects/config/app_config.dart';
 import 'package:ml_projects/routing/app_router.dart';
 import 'package:ml_projects/services/api_service.dart';
 import 'package:ml_projects/services/toast_service.dart';
+import 'package:ml_projects/services/database_service.dart';
+import 'package:ml_projects/services/connectivity_service.dart';
 
 class ProjectsListingPage extends StatefulWidget {
   const ProjectsListingPage({super.key});
@@ -14,14 +17,35 @@ class ProjectsListingPage extends StatefulWidget {
 }
 
 class _ProjectsListingPageState extends State<ProjectsListingPage> {
+  static const String _tableName = 'projects';
+  
   final ApiService _apiService = ApiService();
+  final DatabaseService _databaseService = DatabaseService.instance;
+  final ConnectivityService _connectivityService = ConnectivityService.instance;
+  
   List<Map<String, dynamic>> _projectsList = [];
+  Map<String, bool> _downloadedProjects = {};
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    _loadDownloadedStatus();
     _fetchProjects();
+  }
+
+  Future<void> _loadDownloadedStatus() async {
+    try {
+      final downloadedData = await _databaseService.getAllData(_tableName);
+      setState(() {
+        _downloadedProjects = {
+          for (var project in downloadedData)
+            project['id']?.toString() ?? project['_id']?.toString() ?? '': true
+        };
+      });
+    } catch (e) {
+      debugPrint('Error loading downloaded status: $e');
+    }
   }
 
   Future<void> _fetchProjects() async {
@@ -30,6 +54,15 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
     });
 
     try {
+      if (!_connectivityService.isOnline) {
+        final offlineProjects = await _databaseService.getAllData(_tableName);
+        setState(() {
+          _projectsList = offlineProjects;
+          _isLoading = false;
+        });
+        return;
+      }
+
       final profileData = AppConfig.instance.profileData;
       if (profileData == null) {
         throw Exception('Profile data not configured');
@@ -63,6 +96,19 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
       throw Exception('Invalid response format');
     } catch (e) {
       debugPrint('Error fetching projects: $e');
+      try {
+        final offlineProjects = await _databaseService.getAllData(_tableName);
+        if (offlineProjects.isNotEmpty) {
+          setState(() {
+            _projectsList = offlineProjects;
+            _isLoading = false;
+          });
+          ToastService.showError('Failed to fetch latest data. Showing offline data.');
+          return;
+        }
+      } catch (dbError) {
+        debugPrint('Error loading from database: $dbError');
+      }
       
       ToastService.showError(
         e.toString().replaceFirst('Exception: ', ''),
@@ -71,6 +117,35 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _downloadProject(Map<String, dynamic> project) async {
+    try {
+      final id = project['id']?.toString() ?? project['_id']?.toString();
+      
+      if (id == null || id.isEmpty) {
+        ToastService.showError('Project ID not found');
+        return;
+      }
+
+      if (_downloadedProjects[id] == true) {
+        ToastService.showInfo('Project already downloaded');
+        return;
+      }
+
+      final jsonString = json.encode(project);
+
+      await _databaseService.saveData(_tableName, id, jsonString);
+
+      setState(() {
+        _downloadedProjects[id] = true;
+      });
+
+      ToastService.showSuccess('Project downloaded successfully');
+    } catch (e) {
+      debugPrint('Error downloading project: $e');
+      ToastService.showError('Failed to download project');
     }
   }
 
@@ -134,6 +209,9 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
         itemCount: _projectsList.length,
         itemBuilder: (context, index) {
           final project = _projectsList[index];
+          final projectId = project['id']?.toString() ?? project['_id']?.toString() ?? '';
+          final isDownloaded = _downloadedProjects[projectId] == true;
+
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
@@ -152,7 +230,20 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
                   Text(project['description'] ?? '')
                 ],
               ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      isDownloaded ? Icons.download_done : Icons.download,
+                      color: isDownloaded ? Colors.green : null,
+                    ),
+                    onPressed: () => _downloadProject(project),
+                    tooltip: isDownloaded ? 'Downloaded' : 'Download',
+                  ),
+                  const Icon(Icons.arrow_forward_ios, size: 16),
+                ],
+              ),
               onTap: () => _navigateToDetails(project),
             ),
           );

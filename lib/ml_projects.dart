@@ -5,6 +5,8 @@ export 'package:ml_projects/pages/project_details_page.dart';
 import 'package:flutter/material.dart';
 import 'package:ml_projects/config/app_config.dart';
 import 'package:ml_projects/routing/app_router.dart';
+import 'package:ml_projects/services/database_service.dart';
+import 'package:ml_projects/services/connectivity_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class MLProjects extends StatefulWidget {
@@ -32,6 +34,21 @@ class _MLProjectsState extends State<MLProjects> {
   void initState() {
     super.initState();
     AppConfig.instance.initialize(widget.config);
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    final databaseName = AppConfig.instance.databaseName;
+    if (databaseName != null && databaseName.isNotEmpty) {
+      await DatabaseService.instance.initialize(dbName: databaseName);
+    }
+    await ConnectivityService.instance.initialize();
+  }
+
+  @override
+  void dispose() {
+    ConnectivityService.instance.dispose();
+    super.dispose();
   }
 
   @override

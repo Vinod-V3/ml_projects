@@ -23,6 +23,8 @@ class AppConfig {
     return data is Map<String, dynamic> ? data : null;
   }
 
+  String? get databaseName => _config['databaseName'] as String?;
+
   void update(String key, dynamic value) {
     _config[key] = value;
   }
