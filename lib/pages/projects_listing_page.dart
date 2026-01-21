@@ -169,6 +169,15 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
         ),
         title: Text('projects'.tr()),
         elevation: 2,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            onPressed: () {
+              Navigator.pushNamed(context, AppRouter.fileUpload);
+            },
+            tooltip: 'File Upload',
+          ),
+        ],
       ),
       body: _buildBody(),
     );

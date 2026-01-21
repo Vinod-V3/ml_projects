@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:ml_projects/pages/projects_listing_page.dart';
 import 'package:ml_projects/pages/project_details_page.dart';
+import 'package:ml_projects/pages/file_upload_page.dart';
 
 class AppRouter {
   // Route names
   static const String projectsListing = '/';
   static const String projectDetails = '/project-details';
+  static const String fileUpload = '/file-upload';
 
   // Route generator
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -27,6 +29,12 @@ class AppRouter {
         // If arguments are invalid, navigate to error page or listing
         return MaterialPageRoute(
           builder: (_) => const ProjectsListingPage(),
+          settings: settings,
+        );
+
+      case fileUpload:
+        return MaterialPageRoute(
+          builder: (_) => const FileUploadPage(),
           settings: settings,
         );
 

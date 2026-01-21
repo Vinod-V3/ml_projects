@@ -3,5 +3,18 @@
     "discovered_by_me": "मुझे खोजा गया",
     "created_by_me": "मेरा बनाया हुआ",
     "projects": "परियोजनाएं",
-    "no_projects_found": "कोई परियोजना नहीं मिली"
+    "no_projects_found": "कोई परियोजना नहीं मिली",
+    "images": "इमेज",
+    "videos": "वीडियो",
+    "files": "फाइल",
+    "delete_file": "फाइल हटाएं",
+    "cancel": "रद्द",
+    "delete": "हटाएं",
+    "file_not_found": "फाइल नहीं मिली",
+    "video_message": "वीडियो संदेश",
+    "video_file": "वीडियो फाइल",
+    "pdf_preview": "PDF पूर्वावलोकन",
+    "pdf_file": "PDF फाइल",
+    "not_available": "उपलब्ध नहीं",
+    "file_limit_exceeded": "फाइल सीमा पार हो गई"
 }

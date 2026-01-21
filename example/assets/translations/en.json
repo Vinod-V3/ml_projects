@@ -3,5 +3,18 @@
     "discovered_by_me": "Discovered by me",
     "created_by_me": "Created by me",
     "projects": "Projects",
-    "no_projects_found": "No projects found"
+    "no_projects_found": "No projects found",
+    "images": "Images",
+    "videos": "Videos",
+    "files": "Files",
+    "delete_file": "Delete file",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "file_not_found": "File not found",
+    "video_message": "Video message",
+    "video_file": "Video file",
+    "pdf_preview": "PDF preview",
+    "pdf_file": "PDF file",
+    "not_available": "Not available",
+    "file_limit_exceeded": "File limit exceeded"
 }
