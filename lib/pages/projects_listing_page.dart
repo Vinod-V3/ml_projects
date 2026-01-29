@@ -8,6 +8,8 @@ import 'package:ml_projects/services/api_service.dart';
 import 'package:ml_projects/services/toast_service.dart';
 import 'package:ml_projects/services/database_service.dart';
 import 'package:ml_projects/services/connectivity_service.dart';
+import 'package:ml_projects/constants/filter_constants.dart';
+import 'package:ml_projects/widgets/filter_chip_group.dart';
 
 class ProjectsListingPage extends StatefulWidget {
   const ProjectsListingPage({super.key});
@@ -24,6 +26,7 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
   final ConnectivityService _connectivityService = ConnectivityService.instance;
   
   List<Map<String, dynamic>> _projectsList = [];
+  String? _selectedFilter = 'assignedToMe';
   Map<String, bool> _downloadedProjects = {};
   bool _isLoading = false;
 
@@ -76,6 +79,7 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
           'page': 1,
           'limit': 10,
           'search': '',
+          if (_selectedFilter != null) 'filter': _selectedFilter!,
         },
       );
 
@@ -118,6 +122,13 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
         _isLoading = false;
       });
     }
+  }
+
+  void _onFilterSelected(String? filterValue) {
+    setState(() {
+      _selectedFilter = filterValue;
+    });
+    _fetchProjects();
   }
 
   Future<void> _downloadProject(Map<String, dynamic> project) async {
@@ -179,7 +190,18 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
           ),
         ],
       ),
-      body: _buildBody(),
+      body: Column(
+        children: [
+          FilterChipGroup(
+            filters: AppFilters.projectFilters,
+            selectedValue: _selectedFilter,
+            onFilterSelected: _onFilterSelected,
+          ),
+          Expanded(
+            child: _buildBody(),
+          ),
+        ],
+      ),
     );
   }
 
