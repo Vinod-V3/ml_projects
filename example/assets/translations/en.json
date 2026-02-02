@@ -16,5 +16,6 @@
     "pdf_preview": "PDF preview",
     "pdf_file": "PDF file",
     "not_available": "Not available",
-    "file_limit_exceeded": "File limit exceeded"
+    "file_limit_exceeded": "File limit exceeded",
+    "project_serach_placeholder": "Search your project here"
 }

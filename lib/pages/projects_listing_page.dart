@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -24,9 +25,12 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
   final ApiService _apiService = ApiService();
   final DatabaseService _databaseService = DatabaseService.instance;
   final ConnectivityService _connectivityService = ConnectivityService.instance;
+  final TextEditingController _searchController = TextEditingController();
   
+  Timer? _debounceTimer;
   List<Map<String, dynamic>> _projectsList = [];
   String? _selectedFilter = 'assignedToMe';
+  String _searchQuery = '';
   Map<String, bool> _downloadedProjects = {};
   bool _isLoading = false;
 
@@ -35,6 +39,23 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
     super.initState();
     _loadDownloadedStatus();
     _fetchProjects();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchQuery = value;
+      });
+      _fetchProjects();
+    });
   }
 
   Future<void> _loadDownloadedStatus() async {
@@ -78,7 +99,7 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
           'type': 'improvementProject',
           'page': 1,
           'limit': 10,
-          'search': '',
+          'search': _searchQuery,
           if (_selectedFilter != null) 'filter': _selectedFilter!,
         },
       );
@@ -192,6 +213,30 @@ class _ProjectsListingPageState extends State<ProjectsListingPage> {
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                hintText: 'project_serach_placeholder'.tr(),
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          _onSearchChanged('');
+                        },
+                      )
+                    : null,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ),
           FilterChipGroup(
             filters: AppFilters.projectFilters,
             selectedValue: _selectedFilter,

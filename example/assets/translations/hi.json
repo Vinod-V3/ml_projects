@@ -16,5 +16,6 @@
     "pdf_preview": "PDF पूर्वावलोकन",
     "pdf_file": "PDF फाइल",
     "not_available": "उपलब्ध नहीं",
-    "file_limit_exceeded": "फाइल सीमा पार हो गई"
+    "file_limit_exceeded": "फाइल सीमा पार हो गई",
+    "project_serach_placeholder": "आपके परियोजना यहाँ खोजें"
 }
